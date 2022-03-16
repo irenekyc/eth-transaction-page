@@ -17,7 +17,7 @@ import {
   APP_STATUS_CONNECTED,
 } from "../constants/app";
 import { FormData } from "../typings/FormData";
-import { parse } from "path";
+
 import {
   TransactionStatusType,
   TransactionDataType,
@@ -27,7 +27,7 @@ import {
   TRANSACTION_STATUS_LOADING,
   TRANSACTION_STATUS_COMPLETED,
 } from "../constants/transaction";
-import { fdatasync } from "fs";
+import dummyTransactionsData from "../lib/dummyData";
 
 declare let window: any;
 interface TransactionContextType {
@@ -37,6 +37,7 @@ interface TransactionContextType {
   currentUserAddress: string | null;
   sendTransaction: (data: FormData) => void;
   transactionStatus: TransactionStatusType;
+  allTransactions: TransactionDataType[];
 }
 
 export const TransactionContext = createContext<TransactionContextType>(
@@ -68,7 +69,6 @@ export const TransactionProvider: FunctionComponent = ({ children }) => {
     setTransactionStatus,
   ] = useState<TransactionStatusType>(TRANSACTION_STATUS_INITIAL);
 
-  const [numOfTransactions, setNumOfTransactions] = useState<number>(0);
   const [allTransactions, setAllTransactions] = useState<TransactionDataType[]>(
     []
   );
@@ -88,11 +88,11 @@ export const TransactionProvider: FunctionComponent = ({ children }) => {
         );
         setTransactionCountract(transactionContract as Contract);
         const transactionCount = await transactionContract.transactionCount();
-        setNumOfTransactions(transactionCount.toNumber());
+        const numOfTransactions = transactionCount.toNumber();
+        let data: TransactionDataType[] = [];
 
-        if (transactionCount.toNumber() !== 0) {
-          let data: TransactionDataType[] = [];
-          for (var i = 0; i <= transactionCount.toNumber(); i++) {
+        if (numOfTransactions !== 0) {
+          for (var i = 0; i <= numOfTransactions; i++) {
             const transaction = await transactionContract?.transactions(i);
             const {
               receiver,
@@ -114,8 +114,9 @@ export const TransactionProvider: FunctionComponent = ({ children }) => {
             };
             data.push(transactionData);
           }
-          setAllTransactions(data);
         }
+
+        setAllTransactions([...data, ...dummyTransactionsData]);
 
         const accounts = await ethereum.request({
           method: "eth_accounts",
@@ -227,6 +228,7 @@ export const TransactionProvider: FunctionComponent = ({ children }) => {
         currentUserAddress,
         sendTransaction,
         transactionStatus,
+        allTransactions,
       }}
     >
       {children}
