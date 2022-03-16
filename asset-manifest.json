@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/eth-transaction-page/static/css/main.a31b5e0e.css",
+    "main.js": "/eth-transaction-page/static/js/main.943b7293.js",
+    "index.html": "/eth-transaction-page/index.html",
+    "main.a31b5e0e.css.map": "/eth-transaction-page/static/css/main.a31b5e0e.css.map",
+    "main.943b7293.js.map": "/eth-transaction-page/static/js/main.943b7293.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.a31b5e0e.css",
+    "static/js/main.943b7293.js"
+  ]
+}
