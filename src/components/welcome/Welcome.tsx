@@ -3,23 +3,22 @@ import React, {
   FunctionComponent,
   useState,
   ChangeEventHandler,
+  useContext,
+  useEffect,
 } from "react";
 import { AiFillPlayCircle } from "react-icons/ai";
 import { SiEthereum } from "react-icons/si";
 import { BsInfoCircle } from "react-icons/bs";
 
 import Loader from "../loader";
-
-const TRANSACTION_STATUS_INITIAL = "initial";
-const TRANSACTION_STATUS_COMPLETED = "completed";
-const TRANSACTION_STATUS_FAILED = "failed";
-const TRANSACTION_STATUS_LOADING = "loading";
-
-type TransactionStatusType =
-  | typeof TRANSACTION_STATUS_COMPLETED
-  | typeof TRANSACTION_STATUS_FAILED
-  | typeof TRANSACTION_STATUS_LOADING
-  | typeof TRANSACTION_STATUS_INITIAL;
+import { TransactionContext } from "../../context/TransactionContext";
+import { APP_STATUS_CONNECTED } from "../../constants/app";
+import { FormData } from "../../typings/FormData";
+import { isAddress } from "ethers/lib/utils";
+import {
+  TRANSACTION_STATUS_COMPLETED,
+  TRANSACTION_STATUS_LOADING,
+} from "../../constants/transaction";
 
 const gridItemStyles =
   "min-h-[70px] sm:px-0 px-2 sm:min-w-[120px] flex justify-center items-center border-[0.5px] border-gray-400 text-sm font-light text-white";
@@ -35,26 +34,21 @@ const Input: FunctionComponent<InputProps> = ({ className, ...props }) => (
   />
 );
 
-type FormData = {
-  addressTo: string;
-  eth: number;
-  keyword: string;
-  message: string;
-};
-
 const Welcome = () => {
-  const connectWallet = () => {};
+  const {
+    connectWallet,
+    appStatus,
+    currentUserAddress,
+    sendTransaction,
+    transactionStatus,
+  } = useContext(TransactionContext);
+
   const [formData, setFormData] = useState<FormData>({
     addressTo: "",
     eth: 0.0001,
     keyword: "",
     message: "",
   });
-
-  const [
-    transactionStatus,
-    setTransactionStatus,
-  ] = useState<TransactionStatusType>(TRANSACTION_STATUS_INITIAL);
 
   const handleChange: ChangeEventHandler<HTMLInputElement> = (e) => {
     setFormData({
@@ -63,7 +57,18 @@ const Welcome = () => {
     });
   };
 
-  const handleSubmit = () => {};
+  const handleSubmit = () => {
+    const { addressTo, eth, keyword } = formData;
+    if (!addressTo || !eth || !keyword) {
+      return;
+    }
+    const isValidAddress = isAddress(addressTo);
+    if (!isValidAddress) {
+      // set error
+    } else {
+      sendTransaction(formData);
+    }
+  };
 
   const renderStatus = (status = transactionStatus): JSX.Element => {
     switch (status) {
@@ -73,7 +78,7 @@ const Welcome = () => {
       case TRANSACTION_STATUS_LOADING:
         // Loader
         return <Loader />;
-      case TRANSACTION_STATUS_FAILED:
+      case TRANSACTION_STATUS_LOADING:
         // Loader
         return <span>ERROR</span>;
       default:
@@ -88,6 +93,17 @@ const Welcome = () => {
         );
     }
   };
+
+  useEffect(() => {
+    if (transactionStatus === TRANSACTION_STATUS_COMPLETED) {
+      setFormData({
+        addressTo: "",
+        eth: 0.0001,
+        keyword: "",
+        message: "",
+      });
+    }
+  }, [transactionStatus]);
   return (
     <div className="flex w-full justify-center items-center">
       <div className="flex md:flex-row flex-col items-start justify-between md:p-20 py-12 px-4">
@@ -99,13 +115,15 @@ const Welcome = () => {
             Explore the crypto world. Buy and sell crytocurrencies easily on
             Krypto
           </p>
-          <button
-            type="button"
-            onClick={connectWallet}
-            className="flex flex-row my-5 bg-[#2952e3] p-3 rounded-full cursor-pointer hover:bg-[#2546bd] justify-center items-center"
-          >
-            <p className="text-white text-base font-bold">Connect Wallet</p>
-          </button>
+          {appStatus !== APP_STATUS_CONNECTED && (
+            <button
+              type="button"
+              onClick={connectWallet}
+              className="flex flex-row my-5 bg-[#2952e3] p-3 rounded-full cursor-pointer hover:bg-[#2546bd] justify-center items-center"
+            >
+              <p className="text-white text-base font-bold">Connect Wallet</p>
+            </button>
+          )}
           <div className="grid sm:grid-cols-3 grid-cols-2 w-full mt-10">
             <div className={`rounded-tl-2xl ${gridItemStyles}`}>
               <p>Reliability</p>
@@ -139,7 +157,9 @@ const Welcome = () => {
                 <BsInfoCircle fontSize={17} color="#fff" />
               </div>
               <div>
-                <p className="text-white font-light text-sm">wallet address</p>
+                <p className="text-white font-light text-sm">
+                  {currentUserAddress || "no wallet connected"}
+                </p>
                 <p className="text-white font-semibold text-lg mt-1">
                   Ethereum
                 </p>
