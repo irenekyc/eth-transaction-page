@@ -56,7 +56,7 @@ const TransactionCard: FunctionComponent<TransactionCardProps> = ({
         />
         <div className="bg-black p-2 px-5 w-max rounded-3xl -mt-5 shadow-2xl">
           <p className="text-[#37c7da] font-bold">
-            {timestamp.toLocaleString()}
+            {new Date(transaction.timestamp * 1000).toLocaleString()}
           </p>
         </div>
       </div>
